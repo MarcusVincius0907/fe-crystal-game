@@ -66,9 +66,21 @@ export function Board(props: { board: any}) {
   return (
     <div className='flex flex-wrap w-[310px] h-[310px] gap-1'>
         {localBoards.map((item, index) => (
-            <div onClick={() => onBlockClick(index)} key={index} style={{ backgroundColor:  item.action ? '#C4BBF0' : '#927FBF'}} className={` cursor-pointer h-[100px] w-[100px] rounded-lg text-white text-center flex flex-col justify-center items-center`}>
-              <div>{item.value}</div> 
-              <div>{ item.action }</div>
+            <div onClick={() => item.value && onBlockClick(index)} key={index} style={{ backgroundColor:  item.action ? '#C4BBF0' : '#927FBF'}} className={` cursor-pointer h-[100px] w-[100px] rounded-lg text-white text-center flex flex-col justify-center items-center`}>
+              {
+                item.value !== null ? 
+                <>
+                  <div>{item.value}</div> 
+                  <div>{ item.action }</div>
+                </> : 
+                <>
+                  <div className='my-class'>
+                    {/* <i className="fa-solid fa-infinity"></i> */}
+                    <i className="fa-solid fa-question"></i>
+                  </div>
+                </>
+              }
+              
               
             </div>
         ))}
