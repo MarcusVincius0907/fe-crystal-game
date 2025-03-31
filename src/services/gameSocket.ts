@@ -1,10 +1,11 @@
 // src/gameService.js
 import { io } from 'socket.io-client';
 import store from "../store/index";
-import { setMatch } from '../store/modules/main';
+import { getMatchById, setLoader, setMatch } from '../store/modules/main';
 import { deepCopy } from '../utils';
+import SessionStorageService, { StorageKeys } from './sessionStorageService';
 
-
+const sessionStorageService = new SessionStorageService();
 
 const socket = io('http://localhost:3001', {
   transports: ["websocket"],
@@ -18,13 +19,10 @@ socket.on('matchStarted', (data) => {
 
 // Listen for game updates
 socket.on('gameUpdate', (update) => {
-  const match = deepCopy(store.getState().main.match);
-  match.panels.forEach((panel, i, arr) => {
-    if(panel.active) arr[i].active = false;
-    else arr[i].active = true;
-  })
-  store.dispatch(setMatch(match))
-  console.log('Game update:', update); // Show game state updates
+  const matchId = sessionStorageService.getItem(StorageKeys.MATCH_ID);
+  const ownerId = sessionStorageService.getItem(StorageKeys.OWNER_ID);
+  store.dispatch(getMatchById({matchId, ownerId}));
+  store.dispatch(setLoader(false));
 });
 
 export const joinRoom = (roomId) => {
@@ -37,6 +35,7 @@ export const startMatch = (roomId) => {
 
 export const sendGameUpdate = (roomId, ownerId, update) => {
   socket.emit('gameUpdate', { roomId, ownerId, update });
+  store.dispatch(setLoader(true));
 };
 
 export default socket;

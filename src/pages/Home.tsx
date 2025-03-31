@@ -28,26 +28,43 @@ export function Home() {
 
   const onSavePanel = () => {
 
-    const gameUpdate = {step: 1, rob: '', explode: ''};
+    //TODO send actions to the server, but still validate actions
 
-    userActions?.forEach((action, i) => {
-      if(action.action === 'rob'){
-        gameUpdate.rob = i;
+    const validateData = {rob: false, explode: false, selected: false};
+    const data = []
+
+    userActions?.forEach((item) => {
+      if(item.action === 'rob'){
+        validateData.rob = true;
+        data.push(item);
       }
 
-      if(action.action === 'explode'){
-        gameUpdate.explode = i
+      if(item.action === 'explode'){
+        validateData.explode = true
+        data.push(item);
+      }
+
+      if(item.action === 'selected'){
+        validateData.selected = true
+        data.push(item);
       }
     });
 
-    if(gameUpdate.rob === '' || gameUpdate.explode === '') {
+    if(match.firstHalf && (!validateData.rob || !validateData.explode)) {
       toast.error('You need to select both actions: rob and explode');
       return;
     }
 
+    if(!match.firstHalf && !validateData.selected) {
+      toast.error('You need to select a block');
+      return;
+    }
 
-    sendGameUpdate(matchId, ownerId, gameUpdate)
+
+    sendGameUpdate(matchId, ownerId, data)
   }
+
+  const isActive = (index: number) => (match.firstHalf && index === 0) || (!match.firstHalf && index === 1)
 
  
   return (
@@ -65,9 +82,9 @@ export function Home() {
         <div className="flex flex-col items-center">
           {
             match?.panels.map((panel, index) => (
-              <div key={index} className={`mt-2.5 flex flex-col items-center p-3 w-full ${ panel.active ? 'bg-[#4d5675]' : '' } `}>
-                <Panel panel={panel.boards} isUserPanel={index === 1} />
-                { panel.active ? 
+              <div key={index} className={`mt-2.5 flex flex-col items-center p-3 w-full ${ isActive(index) ? 'bg-[#4d5675]' : '' } `}>
+                <Panel panel={panel.boards} isUserPanel={index === 1} isActive={isActive(index)} />
+                { isActive(index) ? 
                   <div onClick={onSavePanel} className=" px-10 py-5 bg-[#927FBF] rounded-lg cursor-pointer hover:opacity-50 text-white mt-3">save</div>
                 : null }
               </div>

@@ -1,97 +1,109 @@
 import { use, useEffect, useState } from 'react';
 import './Board.css';
-import { useDispatch } from 'react-redux';
-import { setUserActions } from '../../store/modules/main';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectMatch, selectRound, setUserActions } from '../../store/modules/main';
 import { deepCopy } from '../../utils';
 
 
 
-export function Board(props: { board: any, isUserPanel: boolean }) {
+export function Board(props: { board: any, isUserPanel: boolean, boardIndex: number, isPanelActive: boolean }) {
+
+  const round = useSelector(selectRound);
+  const match = useSelector(selectMatch);
+
+  useEffect(() => {
+    if((round - 1) === props.boardIndex && props.isPanelActive){
+      if(!props.isUserPanel){
+        //it means that we can allow rob and explode
+        setOptions({
+          allowRob: true,
+          allowExplode: true,
+          allowSelected: false,
+        })
+      } else {
+        //it means that we can select
+        setOptions({
+          allowRob: false,
+          allowExplode: false,
+          allowSelected: true,
+        })
+      }
+    }
+  }, [props.isUserPanel, props.boardIndex, round, match]);
+
+  useEffect(() => {
+    setLocalBoards(deepCopy(props?.board?.blocks));
+  }, [match]);
+
   const dispatch = useDispatch();
   const [localBoards, setLocalBoards] = useState(deepCopy(props?.board?.blocks));
   const [options, setOptions] = useState({
-    isRobAvailable: true,
-    isExplodeAvailable: true,
+    allowRob: false,
+    allowExplode: false,
+    allowSelected: false,
   })
 
   useEffect(() => {
     dispatch(setUserActions(localBoards));
   }, [localBoards]);
 
+  const isAvailableForSelecting = () => {
+    //user should be able to select only if the round is equal to the board index and the panel is active
+    return props.boardIndex === (round - 1) && props.isPanelActive;
+  }
+
   const onBlockClick = (index, value) => {
 
-    if(!props.isUserPanel && value === '') return;
-    else if(props.isUserPanel && value === ''){
+    if(options.allowRob && options.allowExplode){
+      //check all localboard items and look for action = 'rob'
+      const robActionIndex = localBoards.findIndex((item) => item.action === 'rob');
+      const explodeActionIndex = localBoards.findIndex((item) => item.action === 'explode');
 
-      //TODO continue here
-
-      const optionsCopy = {...options};
-      optionsCopy.isSelectedAvailable = false;
-      setOptions(optionsCopy);
-
-      const localBoardsCopy = deepCopy(localBoards);
-      localBoardsCopy[index].action = 'selected';
-      setLocalBoards([...localBoardsCopy]);
-      return;
-
-    }
-
-    if(localBoards[index].action !== ''){
-      if(localBoards[index].action === 'rob'){
-        const optionsCopy = {...options};
-        optionsCopy.isRobAvailable = true;
-        setOptions(optionsCopy);
-        const localBoardsCopy = deepCopy(localBoards);
-        localBoardsCopy[index].action = '';
-        setLocalBoards([...localBoardsCopy]);
+      if(robActionIndex  === -1){
+        //set rob action
+        const newLocalBoards = deepCopy(localBoards);
+        newLocalBoards[index].action = 'rob';
+        setLocalBoards(newLocalBoards);
+        setUserActions(newLocalBoards);
+        return;
       }
 
-      if(localBoards[index].action === 'explode'){
-        const optionsCopy = {...options};
-        optionsCopy.isExplodeAvailable = true;
-        setOptions(optionsCopy);
-        const localBoardsCopy = deepCopy(localBoards);
-        localBoardsCopy[index].action = '';
-        setLocalBoards([...localBoardsCopy]);
+      if(explodeActionIndex === -1){
+        //set explode action
+        const newLocalBoards = deepCopy(localBoards);
+        newLocalBoards[index].action = 'explode';
+        setLocalBoards(newLocalBoards);
+        setUserActions(newLocalBoards);
+        return;
       }
+      
+      //look for rob action and explode action and then set action to empty
+      const newLocalBoards = deepCopy(localBoards);
+      
+      newLocalBoards[robActionIndex].action = '';
+      newLocalBoards[explodeActionIndex].action = '';
+      setLocalBoards(newLocalBoards);
+      setUserActions(newLocalBoards);
+      
 
-      return;
-    } 
+    } else if(options.allowSelected){
 
-    if(options.isRobAvailable){
-      const optionsCopy = {...options};
-      optionsCopy.isRobAvailable = false;
-      setOptions(optionsCopy);
+      const newLocalBoards = deepCopy(localBoards);
+      
+      if(newLocalBoards[index].action === 'explode') return;
 
-      const localBoardsCopy = deepCopy(localBoards);
-      localBoardsCopy[index].action = 'rob'
-      setLocalBoards([...localBoardsCopy]);
-    } else if(options.isExplodeAvailable){
+      const selectedActionIndex = localBoards.findIndex((item) => item.action === 'selected');
 
-      const optionsCopy = {...options};
-      optionsCopy.isExplodeAvailable = false;
-      setOptions(optionsCopy);
-
-      const localBoardsCopy = deepCopy(localBoards);
-      localBoardsCopy[index].action = 'explode'
-      setLocalBoards([...localBoardsCopy]);
-    } else {
-      if(localBoards[index].action === 'rob'){
-        const optionsCopy = {...options};
-        optionsCopy.isRobAvailable = true;
-        setOptions(optionsCopy);
-        const localBoardsCopy = deepCopy(localBoards);
-        localBoardsCopy[index].action = '';
-        setLocalBoards([...localBoardsCopy]);
-      }else if(localBoards[index].action === 'explode'){
-        const optionsCopy = {...options};
-        optionsCopy.isExplodeAvailable = true;
-        setOptions(optionsCopy);
-        const localBoardsCopy = deepCopy(localBoards);
-        localBoardsCopy[index].action = '';
-        setLocalBoards([...localBoardsCopy]);
+      if(selectedActionIndex === -1){
+        newLocalBoards[index].action = 'selected';
+        setLocalBoards(newLocalBoards);
+      }else {
+        newLocalBoards[selectedActionIndex].action = '';
+        newLocalBoards[index].action = 'selected';
+        setLocalBoards(newLocalBoards);
       }
     }
+
 
   }
 
@@ -99,9 +111,9 @@ export function Board(props: { board: any, isUserPanel: boolean }) {
   return (
     <div className='flex flex-wrap w-[310px] h-[310px] gap-1'>
         {localBoards && localBoards?.length && localBoards?.map((item, index) => (
-            <div onClick={() => onBlockClick(index, item.value)} key={index} style={{ backgroundColor:  item.action ? '#C4BBF0' : '#927FBF'}} className={` cursor-pointer h-[100px] w-[100px] rounded-lg text-white text-center flex flex-col justify-center items-center`}>
+            <div onClick={() => isAvailableForSelecting() && onBlockClick(index, item.value)} key={index} style={{ backgroundColor:  item.action ? '#C4BBF0' : '#927FBF'}} className={` cursor-pointer h-[100px] w-[100px] rounded-lg text-white text-center flex flex-col justify-center items-center`}>
               {
-                item.value ? 
+                item.value || item.action? 
                 <>
                   <div>{item.value}</div> 
                   <div>{ item.action }</div>

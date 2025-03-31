@@ -35,6 +35,9 @@ const mainSlice = createSlice({
     setMatch: (state, action) => {
       state.match = action.payload;
     },
+    setLoader: (state, action) => {
+      state.loader = action.payload;
+    },
   },
 
   extraReducers: (builder) => {
@@ -52,14 +55,7 @@ const mainSlice = createSlice({
 
       .addCase(getMatchById.fulfilled, (state, action) => {
         if(action.payload) {
-          const match = action.payload;
-          let flag = true;
-          match.panels.map((panel) => {
-            panel.active = flag;
-            flag = !flag;
-            return panel;
-          });
-          state.match = match;
+          state.match = action.payload;
         }
       }
     )
@@ -73,7 +69,8 @@ export const selectMatch = (state) => state.main.match;
 export const selectMatchId = (state) => state.main.matchId;
 export const selectLoader = (state) => state.main.loader;
 export const selectUserActions = (state) => state.main?.userActions;
+export const selectUsers = (state) => state.main?.match?.users || [];
+export const selectRound = (state) => state.main?.match?.round || 0;
 
-
-export const { setUserActions, setMatch } = mainSlice.actions;
+export const { setUserActions, setMatch, setLoader } = mainSlice.actions;
 export default mainSlice.reducer;
