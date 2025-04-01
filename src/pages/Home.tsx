@@ -1,12 +1,13 @@
 import { Header } from "../components/Header/Header";
 import { Panel } from "../components/Panel";
 import { useDispatch, useSelector } from "react-redux";
-import { getMatchById, selectLoader, selectMatch, selectUserActions } from "../store/modules/main";
+import { getMatchById, selectLoader, selectMatch, selectUserActions, selectWinner } from "../store/modules/main";
 import { OverlayLoader } from "../components/Loader/OverlayLoader";
 import { useEffect } from "react";
 import SessionStorageService, { StorageKeys } from "../services/sessionStorageService";
 import { joinRoom, sendGameUpdate } from "../services/gameSocket";
 import toast, { Toaster } from 'react-hot-toast';
+import { Winner } from "../components/Winner/Winner";
 
 
 const sessionStorageService = new SessionStorageService();
@@ -16,6 +17,7 @@ export function Home() {
   const userActions = useSelector(selectUserActions);
   const loader = useSelector(selectLoader);
   const match = useSelector(selectMatch);
+  const winner = useSelector(selectWinner);
 
   const dispatch = useDispatch();
   const matchId = sessionStorageService.getItem(StorageKeys.MATCH_ID);
@@ -98,6 +100,8 @@ export function Home() {
       </section>
       { loader && <OverlayLoader  />}
       <Toaster />
+      { winner && <Winner />}
+      
     </>
   )
 }
