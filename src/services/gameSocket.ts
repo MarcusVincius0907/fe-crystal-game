@@ -1,8 +1,7 @@
 // src/gameService.js
 import { io } from 'socket.io-client';
 import store from "../store/index";
-import { getMatchById, setLoader, setMatch } from '../store/modules/main';
-import { deepCopy } from '../utils';
+import { getMatchById, setOpponentLoader } from '../store/modules/main';
 import SessionStorageService, { StorageKeys } from './sessionStorageService';
 
 const sessionStorageService = new SessionStorageService();
@@ -22,7 +21,7 @@ socket.on('gameUpdate', (update) => {
   const matchId = sessionStorageService.getItem(StorageKeys.MATCH_ID);
   const ownerId = sessionStorageService.getItem(StorageKeys.OWNER_ID);
   store.dispatch(getMatchById({matchId, ownerId}));
-  store.dispatch(setLoader(false));
+  store.dispatch(setOpponentLoader(false));
 });
 
 export const joinRoom = (roomId) => {
@@ -35,7 +34,7 @@ export const startMatch = (roomId) => {
 
 export const sendGameUpdate = (roomId, ownerId, update) => {
   socket.emit('gameUpdate', { roomId, ownerId, update });
-  store.dispatch(setLoader(true));
+  store.dispatch(setOpponentLoader(true));
 };
 
 export default socket;

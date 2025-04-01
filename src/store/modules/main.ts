@@ -26,7 +26,7 @@ export const getMatchById = createAsyncThunk('main/getMatchById', async ({ match
 
 const mainSlice = createSlice({
   name: "main",
-  initialState: { match: null, matchId: '', ownerId: '', loader: false, userActions: null, winner: false },
+  initialState: { match: null, matchId: '', ownerId: '', loader: false, opponentLoader: false, userActions: null, winner: false },
   reducers: {
     setUserActions: (state, action) => {
       state.userActions = action.payload;
@@ -39,6 +39,9 @@ const mainSlice = createSlice({
     },
     setWinner: (state, action) => {
       state.winner = action.payload;
+    },
+    setOpponentLoader: (state, action) => {
+      state.opponentLoader = action.payload;
     },
   },
 
@@ -76,7 +79,8 @@ export const selectLoader = (state) => state.main.loader;
 export const selectUserActions = (state) => state.main?.userActions;
 export const selectUsers = (state) => state.main?.match?.users || [];
 export const selectRound = (state) => state.main?.match?.round || 0;
-export const selectWinner = (state) => state.main.winner;
+export const selectWinner = (state) => state.main?.winner;
+export const selectOpponentLoader = (state) => state?.main?.opponentLoader;
 
-export const { setUserActions, setMatch, setLoader, setWinner } = mainSlice.actions;
+export const { setUserActions, setMatch, setLoader, setWinner, setOpponentLoader } = mainSlice.actions;
 export default mainSlice.reducer;
